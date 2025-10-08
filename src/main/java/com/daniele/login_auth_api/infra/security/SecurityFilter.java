@@ -8,14 +8,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
@@ -39,16 +37,11 @@ public class SecurityFilter extends OncePerRequestFilter {
                 User user = userRepository.findByEmail(login)
                         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+                UserPrincipal principal = new UserPrincipal(user);
 
-                // Cria um UserDetails consistente para usar como "principal"
-                var userDetails = org.springframework.security.core.userdetails.User
-                        .withUsername(user.getEmail())
-                        .password(user.getPassword())
-                        .authorities(authorities)
-                        .build();
+                var authentication = new UsernamePasswordAuthenticationToken(
+                        principal, null, principal.getAuthorities());
 
-                var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
@@ -61,6 +54,6 @@ public class SecurityFilter extends OncePerRequestFilter {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return null;
         }
-        return authHeader.substring(7); // remove "Bearer "
+        return authHeader.substring(7);
     }
 }

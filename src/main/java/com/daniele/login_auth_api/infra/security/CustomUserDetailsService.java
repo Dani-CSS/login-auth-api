@@ -8,8 +8,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-
 @Component
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -21,11 +19,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = repository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found!"));
 
-        // Retorna um UserDetails consistente (da implementação do Spring Security)
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .authorities(new ArrayList<>()) // mapeie roles aqui, se existir
-                .build();
+        return new UserPrincipal(user);
     }
 }
